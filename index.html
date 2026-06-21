@@ -3,76 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能健身追踪 Agent - WOD + 饮食 + 体重</title>
+    <title>智能健身追踪 Agent - 宏量营养素版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     <style>
         body { font-family: 'Noto Sans SC', 'Inter', sans-serif; }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .card-3d {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .card-3d:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-        }
-        .scan-line {
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #10b981, transparent);
-            animation: scan 2s linear infinite;
-            top: 0;
-        }
-        @keyframes scan {
-            0% { top: 0; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-        .pulse-ring {
-            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-        }
-        @keyframes pulse-ring {
-            0% { transform: scale(0.8); opacity: 0.8; }
-            100% { transform: scale(1.4); opacity: 0; }
-        }
-        .food-item-enter {
-            animation: slideInRight 0.3s ease-out;
-        }
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .ocr-highlight {
-            background: linear-gradient(120deg, #fef3c7 0%, #fef3c7 100%);
-            background-repeat: no-repeat;
-            background-size: 100% 40%;
-            background-position: 0 88%;
-        }
-        /* Custom scrollbar */
+        .card-3d { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .card-3d:hover { transform: translateY(-2px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); }
+        .food-item-enter { animation: slideInRight 0.3s ease-out; }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        .macro-bar { transition: width 0.5s ease; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        .meal-badge-breakfast { @apply bg-amber-100 text-amber-800 border-amber-200; }
-        .meal-badge-lunch { @apply bg-orange-100 text-orange-800 border-orange-200; }
-        .meal-badge-dinner { @apply bg-indigo-100 text-indigo-800 border-indigo-200; }
-        .meal-badge-snack { @apply bg-pink-100 text-pink-800 border-pink-200; }
-        .meal-badge-exercise { @apply bg-emerald-100 text-emerald-800 border-emerald-200; }
+        .suggestion-item:hover { background: #f8fafc; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
@@ -82,11 +29,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="relative">
-                        <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                            <i class="fas fa-bolt text-white text-lg"></i>
-                        </div>
-                        <div class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white"></div>
+                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-bolt text-white text-lg"></i>
                     </div>
                     <div>
                         <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">FitTrack Agent</h1>
@@ -107,7 +51,7 @@
 
     <!-- Profile Modal -->
     <div id="profileModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 transform transition-all scale-100">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-xl font-bold text-slate-900">个人档案</h2>
                 <button onclick="closeProfile()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
@@ -116,7 +60,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">昵称</label>
-                        <input type="text" id="pName" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all" placeholder="你的名字">
+                        <input type="text" id="pName" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="你的名字">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">性别</label>
@@ -144,14 +88,131 @@
                     <label class="block text-sm font-medium text-slate-700 mb-1">年龄</label>
                     <input type="number" id="pAge" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="28">
                 </div>
-                <div class="bg-indigo-50 rounded-lg p-3 text-sm text-indigo-800">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    系统将根据你的数据自动计算每日热量预算和基础代谢率
-                </div>
-                <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/30 transition-all transform hover:scale-[1.02]">
+                <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all">
                     保存档案
                 </button>
             </form>
+        </div>
+    </div>
+
+    <!-- Edit Food Modal -->
+    <div id="editFoodModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-slate-900">编辑饮食记录</h2>
+                <button onclick="closeEditFood()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">食物名称</label>
+                    <input type="text" id="editFoodName" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">份量</label>
+                        <input type="number" id="editFoodAmount" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">单位</label>
+                        <select id="editFoodUnit" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none">
+                            <option value="serving">份</option>
+                            <option value="g">克</option>
+                            <option value="bowl">碗</option>
+                            <option value="piece">个</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">蛋白质 (g)</label>
+                        <input type="number" id="editFoodProtein" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">碳水 (g)</label>
+                        <input type="number" id="editFoodCarbs" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">脂肪 (g)</label>
+                        <input type="number" id="editFoodFat" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none">
+                    </div>
+                </div>
+                <div class="bg-slate-50 rounded-lg p-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-slate-600">总热量</span>
+                        <span class="text-lg font-bold text-orange-600"><span id="editFoodCalories">0</span> kcal</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">自动计算：蛋白质×4 + 碳水×4 + 脂肪×9</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">餐别</label>
+                    <select id="editFoodMeal" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none">
+                        <option value="breakfast">早餐</option>
+                        <option value="lunch">午餐</option>
+                        <option value="dinner">晚餐</option>
+                        <option value="snack">加餐</option>
+                    </select>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="saveEditFood()" class="flex-1 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg transition-colors">
+                        <i class="fas fa-save mr-1"></i>保存修改
+                    </button>
+                    <button onclick="deleteEditFood()" class="flex-1 py-2 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded-lg transition-colors">
+                        <i class="fas fa-trash mr-1"></i>删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit WOD Modal -->
+    <div id="editWODModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-slate-900">编辑 WOD 记录</h2>
+                <button onclick="closeEditWOD()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">训练名称</label>
+                    <input type="text" id="editWODName" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">消耗热量 (kcal)</label>
+                    <input type="number" id="editWODCalories" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="saveEditWOD()" class="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg transition-colors">
+                        <i class="fas fa-save mr-1"></i>保存修改
+                    </button>
+                    <button onclick="deleteEditWOD()" class="flex-1 py-2 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded-lg transition-colors">
+                        <i class="fas fa-trash mr-1"></i>删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Budget Modal -->
+    <div id="editBudgetModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-slate-900">调整每日热量预算</h2>
+                <button onclick="closeEditBudget()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div class="bg-slate-50 rounded-lg p-4">
+                    <p class="text-sm text-slate-600 mb-2">系统计算的基础代谢：<span id="calculatedBMR" class="font-bold text-slate-900">--</span> kcal</p>
+                    <p class="text-sm text-slate-600">建议摄入（含运动）：<span id="calculatedTDEE" class="font-bold text-slate-900">--</span> kcal</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">自定义每日热量预算 (kcal)</label>
+                    <input type="number" id="customBudget" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <p class="text-xs text-slate-500 mt-1">留空则使用系统计算值</p>
+                </div>
+                <button onclick="saveBudget()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors">
+                    <i class="fas fa-save mr-1"></i>保存
+                </button>
+            </div>
         </div>
     </div>
 
@@ -159,9 +220,7 @@
 
         <!-- Top Stats Dashboard -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Weight Card -->
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 card-3d relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-100 to-transparent rounded-bl-full opacity-50"></div>
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 card-3d">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">空腹体重</span>
                     <div class="bg-blue-50 p-1.5 rounded-lg"><i class="fas fa-weight-scale text-blue-600 text-sm"></i></div>
@@ -179,9 +238,7 @@
                 </button>
             </div>
 
-            <!-- BMI Card -->
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 card-3d relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-purple-100 to-transparent rounded-bl-full opacity-50"></div>
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 card-3d">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">BMI</span>
                     <div class="bg-purple-50 p-1.5 rounded-lg"><i class="fas fa-chart-pie text-purple-600 text-sm"></i></div>
@@ -195,9 +252,7 @@
                 </div>
             </div>
 
-            <!-- Calories In -->
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 card-3d relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-orange-100 to-transparent rounded-bl-full opacity-50"></div>
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 card-3d">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">摄入</span>
                     <div class="bg-orange-50 p-1.5 rounded-lg"><i class="fas fa-utensils text-orange-600 text-sm"></i></div>
@@ -211,9 +266,7 @@
                 </div>
             </div>
 
-            <!-- Calories Out / WOD -->
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 card-3d relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-emerald-100 to-transparent rounded-bl-full opacity-50"></div>
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 card-3d">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">消耗 (WOD)</span>
                     <div class="bg-emerald-50 p-1.5 rounded-lg"><i class="fas fa-fire text-emerald-600 text-sm"></i></div>
@@ -226,6 +279,50 @@
                     <i class="fas fa-dumbbell mr-1"></i>
                     <span id="wodCount">0 个 WOD</span>
                 </div>
+            </div>
+        </div>
+
+        <!-- Macro Summary Bar -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-slate-900 flex items-center">
+                    <i class="fas fa-chart-bar text-indigo-600 mr-2"></i>
+                    今日宏量营养素
+                </h3>
+                <div class="flex items-center space-x-4 text-xs">
+                    <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-400 mr-1"></span>蛋白质</span>
+                    <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-amber-400 mr-1"></span>碳水</span>
+                    <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-blue-400 mr-1"></span>脂肪</span>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4 mb-4">
+                <div class="text-center p-3 bg-red-50 rounded-xl">
+                    <div class="text-xs text-red-600 mb-1">蛋白质</div>
+                    <div class="text-2xl font-bold text-red-700"><span id="totalProtein">0</span><span class="text-sm font-normal">g</span></div>
+                    <div class="text-xs text-red-400 mt-1" id="proteinPct">0%</div>
+                </div>
+                <div class="text-center p-3 bg-amber-50 rounded-xl">
+                    <div class="text-xs text-amber-600 mb-1">碳水化合物</div>
+                    <div class="text-2xl font-bold text-amber-700"><span id="totalCarbs">0</span><span class="text-sm font-normal">g</span></div>
+                    <div class="text-xs text-amber-400 mt-1" id="carbsPct">0%</div>
+                </div>
+                <div class="text-center p-3 bg-blue-50 rounded-xl">
+                    <div class="text-xs text-blue-600 mb-1">脂肪</div>
+                    <div class="text-2xl font-bold text-blue-700"><span id="totalFat">0</span><span class="text-sm font-normal">g</span></div>
+                    <div class="text-xs text-blue-400 mt-1" id="fatPct">0%</div>
+                </div>
+            </div>
+
+            <div class="w-full h-4 bg-slate-100 rounded-full overflow-hidden flex">
+                <div id="macroBarProtein" class="h-full bg-red-400 macro-bar" style="width: 0%"></div>
+                <div id="macroBarCarbs" class="h-full bg-amber-400 macro-bar" style="width: 0%"></div>
+                <div id="macroBarFat" class="h-full bg-blue-400 macro-bar" style="width: 0%"></div>
+            </div>
+            
+            <div class="mt-3 flex justify-between text-xs text-slate-500">
+                <span>建议比例：蛋白质 30% | 碳水 40% | 脂肪 30%</span>
+                <span id="macroAdvice" class="text-indigo-600 font-medium">--</span>
             </div>
         </div>
 
@@ -255,69 +352,26 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <!-- Left Column: Inputs -->
+            <!-- Left Column -->
             <div class="lg:col-span-7 space-y-6">
                 
-                <!-- WOD Photo Upload -->
+                <!-- WOD Entry -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                     <div class="p-5 border-b border-slate-100 flex items-center justify-between">
                         <h3 class="font-bold text-slate-900 flex items-center">
-                            <i class="fas fa-camera text-emerald-600 mr-2"></i>
+                            <i class="fas fa-dumbbell text-emerald-600 mr-2"></i>
                             WOD 记录
                         </h3>
-                        <span class="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full">支持拍照或截图上传</span>
+                        <span class="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full">根据运动手表数据填写</span>
                     </div>
-                    
                     <div class="p-5">
-                        <!-- Upload Zone -->
-                        <div id="wodUploadZone" class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-emerald-400 hover:bg-emerald-50/30 transition-all cursor-pointer relative overflow-hidden" onclick="document.getElementById('wodInput').click()">
-                            <input type="file" id="wodInput" accept="image/*" class="hidden" onchange="handleWODUpload(event)">
-                            <div id="wodPlaceholder">
-                                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <i class="fas fa-cloud-upload-alt text-2xl text-slate-400"></i>
-                                </div>
-                                <p class="text-sm font-medium text-slate-700">点击上传 WOD 照片</p>
-                                <p class="text-xs text-slate-500 mt-1">系统将自动识别训练内容</p>
-                            </div>
-                            <div id="wodPreview" class="hidden relative">
-                                <img id="wodPreviewImg" class="max-h-48 mx-auto rounded-lg shadow-md" src="" alt="WOD">
-                                <div id="wodScanning" class="absolute inset-0 bg-black/50 rounded-lg hidden flex items-center justify-center">
-                                    <div class="scan-line"></div>
-                                    <div class="text-white text-sm font-medium"><i class="fas fa-spinner fa-spin mr-2"></i>OCR 识别中...</div>
-                                </div>
-                            </div>
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <input type="text" id="wodName" placeholder="训练名称 (如: 力量训练/跑步)" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <input type="number" id="wodCals" placeholder="消耗热量 (kcal)" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
                         </div>
-
-                        <!-- OCR Result -->
-                        <div id="ocrResult" class="hidden mt-4 bg-slate-50 rounded-lg p-4 border border-slate-200">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-xs font-semibold text-slate-500 uppercase">识别结果</span>
-                                <button onclick="clearWOD()" class="text-xs text-red-500 hover:text-red-700"><i class="fas fa-trash mr-1"></i>清除</button>
-                            </div>
-                            <div id="ocrText" class="text-sm text-slate-700 font-mono whitespace-pre-wrap max-h-32 overflow-y-auto"></div>
-                            <div class="mt-3 flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-xs text-slate-500">估算消耗:</span>
-                                    <span id="wodCalEstimate" class="text-lg font-bold text-emerald-600">--</span>
-                                    <span class="text-xs text-slate-500">kcal</span>
-                                </div>
-                                <button onclick="confirmWOD()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">
-                                    <i class="fas fa-check mr-1"></i>确认添加
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Manual WOD Entry -->
-                        <div class="mt-4 pt-4 border-t border-slate-100">
-                            <p class="text-xs text-slate-500 mb-3 font-medium">或手动记录训练</p>
-                            <div class="grid grid-cols-2 gap-3">
-                                <input type="text" id="wodName" placeholder="训练名称 (如: Fran)" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                                <input type="number" id="wodCals" placeholder="估算消耗 (kcal)" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                            </div>
-                            <button onclick="addManualWOD()" class="mt-2 w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors">
-                                <i class="fas fa-plus mr-1"></i>添加手动记录
-                            </button>
-                        </div>
+                        <button onclick="addWOD()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg transition-all">
+                            <i class="fas fa-plus mr-2"></i>添加 WOD
+                        </button>
                     </div>
                 </div>
 
@@ -338,11 +392,11 @@
                     
                     <div class="p-5">
                         <div class="relative mb-4">
-                            <input type="text" id="foodSearch" placeholder="输入食物名称，自动估算热量..." 
-                                class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                            <input type="text" id="foodSearch" placeholder="搜索食物..." 
+                                class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none"
                                 oninput="searchFood(this.value)" autocomplete="off">
                             <i class="fas fa-search absolute left-3.5 top-3.5 text-slate-400"></i>
-                            <div id="foodSuggestions" class="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto hidden"></div>
+                            <div id="foodSuggestions" class="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 overflow-y-auto hidden"></div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3 mb-4">
@@ -357,7 +411,22 @@
                                 </select>
                             </div>
                         </div>
-                        
+
+                        <div class="grid grid-cols-3 gap-3 mb-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">蛋白质 (g)</label>
+                                <input type="number" id="foodProtein" placeholder="0" class="w-full px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">碳水 (g)</label>
+                                <input type="number" id="foodCarbs" placeholder="0" class="w-full px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">脂肪 (g)</label>
+                                <input type="number" id="foodFat" placeholder="0" class="w-full px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+
                         <div class="flex items-center justify-between mb-4 p-3 bg-orange-50 rounded-lg">
                             <span class="text-sm text-slate-600">估算热量</span>
                             <span class="text-xl font-bold text-orange-600"><span id="foodCalDisplay">0</span> <span class="text-sm font-normal text-slate-500">kcal</span></span>
@@ -365,22 +434,21 @@
 
                         <input type="hidden" id="currentMealType" value="breakfast">
 
-                        <div class="flex space-x-2 mb-4 overflow-x-auto pb-1">
-                            <button onclick="quickFood('燕麦粥', 150)" class="flex-shrink-0 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-700 transition-colors">燕麦粥</button>
-                            <button onclick="quickFood('煮鸡蛋', 70)" class="flex-shrink-0 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-700 transition-colors">煮鸡蛋</button>
-                            <button onclick="quickFood('鸡胸肉(100g)', 165)" class="flex-shrink-0 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-700 transition-colors">鸡胸肉</button>
-                            <button onclick="quickFood('米饭(碗)', 200)" class="flex-shrink-0 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-700 transition-colors">米饭</button>
-                            <button onclick="quickFood('西兰花', 35)" class="flex-shrink-0 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-700 transition-colors">西兰花</button>
-                            <button onclick="quickFood('香蕉', 105)" class="flex-shrink-0 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-700 transition-colors">香蕉</button>
+                        <!-- Quick Food Tags -->
+                        <div class="mb-4">
+                            <p class="text-xs text-slate-500 mb-2 font-medium">快速添加</p>
+                            <div class="flex flex-wrap gap-2" id="quickFoodTags">
+                                <!-- Dynamically populated -->
+                            </div>
                         </div>
 
-                        <button onclick="addFood()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold rounded-xl shadow-lg shadow-orange-500/30 transition-all transform hover:scale-[1.02]">
+                        <button onclick="addFood()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold rounded-xl shadow-lg transition-all">
                             <i class="fas fa-plus mr-2"></i>添加记录
                         </button>
                     </div>
                 </div>
 
-                <!-- Weight Input (Collapsible) -->
+                <!-- Weight Input -->
                 <div id="weightInputPanel" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
                     <h3 class="font-bold text-slate-900 mb-4 flex items-center">
                         <i class="fas fa-weight-scale text-blue-600 mr-2"></i>
@@ -412,7 +480,7 @@
                 </div>
             </div>
 
-            <!-- Right Column: Charts & Insights -->
+            <!-- Right Column -->
             <div class="lg:col-span-5 space-y-6">
                 
                 <!-- Weight Chart -->
@@ -460,14 +528,36 @@
                     </div>
                 </div>
 
-                <!-- Calorie Distribution -->
+                <!-- Macro Distribution Chart -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
-                    <h3 class="font-bold text-slate-900 mb-4">热量分布</h3>
+                    <h3 class="font-bold text-slate-900 mb-4">营养素分布</h3>
                     <div class="relative h-48">
                         <canvas id="macroChart"></canvas>
                     </div>
-                    <div id="macroLegend" class="mt-4 space-y-2">
-                        <!-- Dynamic legend -->
+                    <div id="macroLegend" class="mt-4 space-y-2"></div>
+                </div>
+
+                <!-- Budget Settings -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-900">热量预算设置</h3>
+                        <button onclick="showEditBudget()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium bg-indigo-50 px-2 py-1 rounded-lg">
+                            <i class="fas fa-edit mr-1"></i>修改
+                        </button>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-600">基础代谢 (BMR)</span>
+                            <span id="displayBMR" class="font-semibold text-slate-900">--</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-600">每日热量预算</span>
+                            <span id="displayBudget" class="font-semibold text-indigo-600">--</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-600">当前状态</span>
+                            <span id="budgetStatus" class="font-semibold">--</span>
+                        </div>
                     </div>
                 </div>
 
@@ -512,819 +602,261 @@
     </div>
 
     <script>
-        // ===== DATA STORE =====
+        // ===== EXTENDED FOOD DATABASE WITH MACROS =====
+        // 格式: { cal, p, c, f } per serving (100g or typical portion)
         const FOOD_DB = {
-            '燕麦粥': 150, '煮鸡蛋': 70, '荷包蛋': 90, '煎蛋': 120,
-            '全麦面包': 80, '白面包': 70, '牛奶(250ml)': 150, '豆浆': 120,
-            '香蕉': 105, '苹果': 95, '橙子': 62, '蓝莓': 57,
-            '米饭(碗)': 200, '糙米饭(碗)': 180, '面条(碗)': 280, '馒头': 220,
-            '鸡胸肉(100g)': 165, '牛肉(100g)': 250, '猪瘦肉(100g)': 143,
-            '三文鱼(100g)': 208, '虾(100g)': 85, '豆腐(100g)': 76,
-            '西兰花': 35, '菠菜': 23, '生菜': 15, '黄瓜': 16,
-            '番茄': 18, '胡萝卜': 41, '土豆': 77, '红薯': 86,
-            '酸奶': 120, '坚果(30g)': 180, '黑咖啡': 2, '蛋白粉': 120,
-            '披萨(片)': 280, '汉堡': 550, '薯条(中)': 380, '可乐(330ml)': 140,
-            '奶茶': 400, '蛋糕(块)': 350, '巧克力(块)': 230, '冰淇淋': 200
-        };
+            // === 早餐类 ===
+            '燕麦粥': { cal: 150, p: 5, c: 27, f: 3 },
+            '煮鸡蛋': { cal: 70, p: 6, c: 1, f: 5 },
+            '荷包蛋': { cal: 90, p: 6, c: 1, f: 7 },
+            '煎蛋': { cal: 120, p: 6, c: 1, f: 10 },
+            '茶叶蛋': { cal: 75, p: 6, c: 1, f: 5 },
+            '皮蛋瘦肉粥': { cal: 180, p: 8, c: 25, f: 5 },
+            '小米粥': { cal: 120, p: 3, c: 25, f: 1 },
+            '豆浆': { cal: 120, p: 5, c: 10, f: 4 },
+            '无糖豆浆': { cal: 80, p: 5, c: 3, f: 3 },
+            '牛奶(250ml)': { cal: 150, p: 8, c: 12, f: 8 },
+            '脱脂牛奶': { cal: 90, p: 8, c: 12, f: 0.5 },
+            '酸奶': { cal: 120, p: 8, c: 12, f: 4 },
+            '无糖酸奶': { cal: 70, p: 8, c: 5, f: 2 },
+            '全麦面包': { cal: 80, p: 4, c: 13, f: 1.5 },
+            '白面包': { cal: 70, p: 2, c: 13, f: 1 },
+            '吐司': { cal: 75, p: 2.5, c: 14, f: 1 },
+            '法棍': { cal: 280, p: 9, c: 56, f: 1 },
+            '贝果': { cal: 250, p: 9, c: 49, f: 1.5 },
+            '可颂': { cal: 280, p: 5, c: 28, f: 16 },
+            '甜甜圈': { cal: 300, p: 4, c: 35, f: 16 },
+            '华夫饼': { cal: 220, p: 4, c: 30, f: 10 },
+            '煎饼果子': { cal: 350, p: 10, c: 45, f: 14 },
+            '油条': { cal: 280, p: 5, c: 30, f: 16 },
+            '包子(肉)': { cal: 220, p: 8, c: 30, f: 8 },
+            '包子(素)': { cal: 180, p: 5, c: 32, f: 4 },
+            '小笼包': { cal: 60, p: 3, c: 7, f: 2.5 },
+            '烧麦': { cal: 150, p: 5, c: 22, f: 5 },
+            '蒸饺': { cal: 50, p: 2, c: 7, f: 2 },
+            '锅贴': { cal: 70, p: 3, c: 8, f: 3 },
+            '馄饨': { cal: 180, p: 8, c: 25, f: 5 },
+            '汤圆': { cal: 250, p: 4, c: 40, f: 8 },
+            '粽子(肉)': { cal: 300, p: 10, c: 45, f: 8 },
+            '粽子(甜)': { cal: 280, p: 5, c: 50, f: 5 },
+            '玉米': { cal: 100, p: 3.5, c: 22, f: 1.5 },
+            '红薯': { cal: 86, p: 1.6, c: 20, f: 0.1 },
+            '紫薯': { cal: 80, p: 1.5, c: 18, f: 0.2 },
+            '南瓜': { cal: 26, p: 1, c: 6, f: 0.1 },
+            '山药': { cal: 57, p: 1.9, c: 12, f: 0.2 },
+            '芋头': { cal: 56, p: 1.3, c: 13, f: 0.2 },
+            '土豆': { cal: 77, p: 2, c: 17, f: 0.1 },
 
-        const WOD_DB = {
-            'fran': 300, 'grace': 350, 'helen': 400, 'filthy 50': 500,
-            'murph': 800, 'cindy': 350, 'angie': 400, 'barbara': 450,
-            'chelsea': 380, 'diane': 320, 'elizabeth': 310, 'karen': 280,
-            'run': 100, 'rowing': 120, 'bike': 90, 'swim': 130,
-            'squat': 8, 'deadlift': 10, 'clean': 12, 'snatch': 15,
-            'pullup': 5, 'pushup': 4, 'burpee': 12, 'double under': 0.5
-        };
+            // === 主食类 ===
+            '米饭(碗)': { cal: 200, p: 4, c: 45, f: 0.5 },
+            '糙米饭': { cal: 180, p: 5, c: 38, f: 1.5 },
+            '紫米饭': { cal: 190, p: 4.5, c: 42, f: 1 },
+            '面条(碗)': { cal: 280, p: 10, c: 56, f: 1 },
+            '意大利面': { cal: 220, p: 8, c: 43, f: 1.5 },
+            '通心粉': { cal: 200, p: 7, c: 40, f: 1 },
+            '荞麦面': { cal: 190, p: 8, c: 38, f: 1.5 },
+            '乌冬面': { cal: 210, p: 6, c: 42, f: 1 },
+            '拉面': { cal: 300, p: 10, c: 55, f: 3 },
+            '河粉': { cal: 200, p: 3, c: 45, f: 0.5 },
+            '米粉': { cal: 190, p: 3, c: 43, f: 0.5 },
+            '米线': { cal: 180, p: 3, c: 40, f: 0.5 },
+            '馒头': { cal: 220, p: 7, c: 45, f: 1 },
+            '花卷': { cal: 210, p: 6, c: 43, f: 1 },
+            '烙饼': { cal: 260, p: 7, c: 45, f: 7 },
+            '手抓饼': { cal: 320, p: 6, c: 35, f: 18 },
+            '葱油饼': { cal: 350, p: 6, c: 38, f: 20 },
+            '春卷': { cal: 200, p: 4, c: 22, f: 11 },
+            '蛋炒饭': { cal: 350, p: 10, c: 50, f: 12 },
+            '扬州炒饭': { cal: 380, p: 12, c: 52, f: 14 },
+            '咖喱饭': { cal: 400, p: 12, c: 55, f: 14 },
+            '卤肉饭': { cal: 450, p: 15, c: 50, f: 20 },
+            '盖浇饭': { cal: 420, p: 14, c: 55, f: 15 },
+            '煲仔饭': { cal: 480, p: 16, c: 58, f: 18 },
+            '粥': { cal: 100, p: 2, c: 22, f: 0.5 },
+            '皮蛋粥': { cal: 150, p: 6, c: 22, f: 4 },
+            '海鲜粥': { cal: 180, p: 10, c: 25, f: 3 },
 
-        let appData = {
-            profile: null,
-            today: { foods: [], wods: [], weight: null },
-            history: {}, // date -> { foods: [], wods: [], weight: number }
-            weightLog: [] // { date, weight }
-        };
+            // === 肉类 ===
+            '鸡胸肉(100g)': { cal: 165, p: 31, c: 0, f: 3.6 },
+            '鸡腿肉(去皮)': { cal: 190, p: 26, c: 0, f: 8 },
+            '鸡腿(带皮)': { cal: 220, p: 24, c: 0, f: 13 },
+            '鸡翅(烤)': { cal: 290, p: 22, c: 0, f: 22 },
+            '鸡翅(炸)': { cal: 350, p: 20, c: 8, f: 28 },
+            '鸭胸肉': { cal: 180, p: 28, c: 0, f: 7 },
+            '牛肉(100g)': { cal: 250, p: 26, c: 0, f: 15 },
+            '牛排(瘦)': { cal: 220, p: 28, c: 0, f: 11 },
+            '牛排(肥)': { cal: 300, p: 24, c: 0, f: 22 },
+            '牛腩': { cal: 280, p: 22, c: 0, f: 20 },
+            '牛腱': { cal: 200, p: 28, c: 0, f: 9 },
+            '肥牛卷': { cal: 320, p: 18, c: 0, f: 28 },
+            '猪瘦肉(100g)': { cal: 143, p: 26, c: 0, f: 3.5 },
+            '猪五花肉': { cal: 350, p: 14, c: 0, f: 32 },
+            '排骨': { cal: 280, p: 18, c: 0, f: 22 },
+            '猪蹄': { cal: 260, p: 22, c: 0, f: 19 },
+            '香肠': { cal: 320, p: 14, c: 2, f: 28 },
+            '培根': { cal: 350, p: 14, c: 1, f: 32 },
+            '火腿': { cal: 200, p: 16, c: 2, f: 14 },
+            '午餐肉': { cal: 300, p: 12, c: 4, f: 26 },
+            '肉丸': { cal: 250, p: 12, c: 8, f: 18 },
+            '鱼丸': { cal: 120, p: 10, c: 8, f: 5 },
+            '虾丸': { cal: 110, p: 12, c: 6, f: 4 },
+            '蟹棒': { cal: 100, p: 8, c: 12, f: 2 },
+            '三文鱼(100g)': { cal: 208, p: 20, c: 0, f: 13 },
+            '金枪鱼': { cal: 130, p: 29, c: 0, f: 1 },
+            '鳕鱼': { cal: 82, p: 18, c: 0, f: 0.7 },
+            '鲈鱼': { cal: 105, p: 19, c: 0, f: 3 },
+            '带鱼': { cal: 127, p: 17, c: 0, f: 6 },
+            '黄花鱼': { cal: 97, p: 17, c: 0, f: 3 },
+            '虾(100g)': { cal: 85, p: 18, c: 0, f: 1 },
+            '虾仁': { cal: 90, p: 20, c: 0, f: 1 },
+            '龙虾': { cal: 90, p: 19, c: 0, f: 1 },
+            '螃蟹': { cal: 97, p: 19, c: 0, f: 2 },
+            '扇贝': { cal: 80, p: 15, c: 3, f: 1 },
+            '蛤蜊': { cal: 62, p: 11, c: 2, f: 1 },
+            '生蚝': { cal: 68, p: 7, c: 4, f: 2 },
+            '鱿鱼': { cal: 92, p: 15, c: 3, f: 1.5 },
+            '墨鱼': { cal: 83, p: 15, c: 2, f: 1 },
 
-        let currentMeal = 'breakfast';
-        let currentWOD = null; // { text, calories, image }
+            // === 蔬菜类 ===
+            '西兰花': { cal: 35, p: 2.8, c: 7, f: 0.4 },
+            '花菜': { cal: 25, p: 2, c: 5, f: 0.3 },
+            '菠菜': { cal: 23, p: 2.9, c: 3.6, f: 0.4 },
+            '生菜': { cal: 15, p: 1.4, c: 2.9, f: 0.2 },
+            '油麦菜': { cal: 13, p: 1.4, c: 2.8, f: 0.2 },
+            '空心菜': { cal: 19, p: 2.6, c: 3.6, f: 0.3 },
+            '芹菜': { cal: 14, p: 0.8, c: 3, f: 0.2 },
+            '韭菜': { cal: 26, p: 2.4, c: 4.6, f: 0.4 },
+            '白菜': { cal: 13, p: 1.5, c: 2.2, f: 0.2 },
+            '娃娃菜': { cal: 12, p: 1.2, c: 2.4, f: 0.1 },
+            '卷心菜': { cal: 25, p: 1.3, c: 5.8, f: 0.1 },
+            '紫甘蓝': { cal: 25, p: 1.3, c: 6, f: 0.2 },
+            '黄瓜': { cal: 16, p: 0.7, c: 3.6, f: 0.1 },
+            '苦瓜': { cal: 19, p: 1, c: 4.3, f: 0.1 },
+            '丝瓜': { cal: 20, p: 1.3, c: 4.2, f: 0.2 },
+            '冬瓜': { cal: 12, p: 0.4, c: 2.6, f: 0.2 },
+            '南瓜': { cal: 26, p: 1, c: 6, f: 0.1 },
+            '番茄': { cal: 18, p: 0.9, c: 3.9, f: 0.2 },
+            '小番茄': { cal: 25, p: 1, c: 5.7, f: 0.3 },
+            '胡萝卜': { cal: 41, p: 0.9, c: 9.6, f: 0.2 },
+            '白萝卜': { cal: 16, p: 0.7, c: 3.4, f: 0.1 },
+            '茄子': { cal: 25, p: 1, c: 5.9, f: 0.2 },
+            '青椒': { cal: 22, p: 1, c: 5.3, f: 0.2 },
+            '彩椒': { cal: 31, p: 1, c: 7.6, f: 0.3 },
+            '辣椒': { cal: 40, p: 1.9, c: 8.8, f: 0.4 },
+            '洋葱': { cal: 40, p: 1.1, c: 9, f: 0.1 },
+            '大蒜': { cal: 149, p: 6.4, c: 33, f: 0.5 },
+            '生姜': { cal: 80, p: 1.8, c: 18, f: 0.8 },
+            '葱': { cal: 33, p: 1.7, c: 7.3, f: 0.3 },
+            '香菜': { cal: 23, p: 2.1, c: 4, f: 0.5 },
+            '蘑菇': { cal: 22, p: 3.1, c: 3.3, f: 0.3 },
+            '香菇': { cal: 26, p: 2.2, c: 4.3, f: 0.1 },
+            '金针菇': { cal: 32, p: 2.7, c: 6, f: 0.4 },
+            '杏鲍菇': { cal: 35, p: 1.3, c: 8.3, f: 0.1 },
+            '木耳': { cal: 27, p: 1.5, c: 6.5, f: 0.2 },
+            '海带': { cal: 13, p: 1.2, c: 2.1, f: 0.2 },
+            '紫菜': { cal: 250, p: 26, c: 44, f: 3 },
+            '豆芽': { cal: 18, p: 2.1, c: 2.9, f: 0.3 },
+            '毛豆': { cal: 131, p: 13, c: 10, f: 5 },
+            '豌豆': { cal: 81, p: 5.4, c: 14, f: 0.4 },
+            '荷兰豆': { cal: 27, p: 2.5, c: 4.9, f: 0.3 },
+            '芦笋': { cal: 20, p: 2.2, c: 3.9, f: 0.1 },
+            '秋葵': { cal: 33, p: 2, c: 7.5, f: 0.1 },
+            '莲藕': { cal: 47, p: 1.2, c: 11.5, f: 0.2 },
+            '竹笋': { cal: 27, p: 2.6, c: 5, f: 0.2 },
+            '莴笋': { cal: 15, p: 1, c: 2.8, f: 0.1 },
+            '茭白': { cal: 26, p: 1.2, c: 5.9, f: 0.2 },
 
-        // ===== INIT =====
-        document.addEventListener('DOMContentLoaded', () => {
-            loadData();
-            updateHeaderDate();
-            if (!appData.profile) {
-                showProfile();
-            } else {
-                initDashboard();
-            }
-            
-            // Setup food input listeners
-            document.getElementById('foodName').addEventListener('input', estimateFoodCal);
-            document.getElementById('foodAmount').addEventListener('input', estimateFoodCal);
-            document.getElementById('foodUnit').addEventListener('change', estimateFoodCal);
-        });
+            // === 豆制品 ===
+            '豆腐(100g)': { cal: 76, p: 8, c: 2, f: 4.5 },
+            '嫩豆腐': { cal: 56, p: 6, c: 2, f: 3 },
+            '老豆腐': { cal: 98, p: 12, c: 2, f: 5 },
+            '冻豆腐': { cal: 85, p: 10, c: 3, f: 4 },
+            '豆腐干': { cal: 140, p: 16, c: 5, f: 6 },
+            '豆腐皮': { cal: 260, p: 24, c: 12, f: 14 },
+            '豆腐脑': { cal: 45, p: 3, c: 4, f: 2 },
+            '腐竹': { cal: 460, p: 44, c: 22, f: 21 },
+            '千张': { cal: 260, p: 24, c: 5, f: 16 },
+            '素鸡': { cal: 200, p: 18, c: 5, f: 12 },
+            '豆泡': { cal: 245, p: 17, c: 8, f: 16 },
+            '豆浆粉': { cal: 420, p: 40, c: 40, f: 18 },
+            '纳豆': { cal: 212, p: 17, c: 14, f: 11 },
 
-        function updateHeaderDate() {
-            const now = new Date();
-            const opts = { month: 'long', day: 'numeric', weekday: 'short' };
-            document.getElementById('headerDate').textContent = now.toLocaleDateString('zh-CN', opts);
-        }
+            // === 水果类 ===
+            '苹果': { cal: 52, p: 0.3, c: 14, f: 0.2 },
+            '香蕉': { cal: 89, p: 1.1, c: 23, f: 0.3 },
+            '橙子': { cal: 47, p: 0.9, c: 12, f: 0.1 },
+            '橘子': { cal: 43, p: 0.8, c: 10, f: 0.2 },
+            '柚子': { cal: 42, p: 0.8, c: 10, f: 0.1 },
+            '柠檬': { cal: 29, p: 1.1, c: 9, f: 0.3 },
+            '梨': { cal: 57, p: 0.4, c: 15, f: 0.1 },
+            '桃子': { cal: 39, p: 0.9, c: 10, f: 0.3 },
+            '油桃': { cal: 44, p: 1.1, c: 11, f: 0.3 },
+            '李子': { cal: 46, p: 0.7, c: 11, f: 0.2 },
+            '草莓': { cal: 32, p: 0.7, c: 8, f: 0.3 },
+            '蓝莓': { cal: 57, p: 0.7, c: 14, f: 0.3 },
+            '树莓': { cal: 52, p: 1.2, c: 12, f: 0.7 },
+            '黑莓': { cal: 43, p: 1.4, c: 10, f: 0.5 },
+            '葡萄': { cal: 69, p: 0.7, c: 18, f: 0.2 },
+            '提子': { cal: 67, p: 0.6, c: 17, f: 0.4 },
+            '樱桃': { cal: 50, p: 1.1, c: 12, f: 0.3 },
+            '西瓜': { cal: 30, p: 0.6, c: 8, f: 0.2 },
+            '哈密瓜': { cal: 34, p: 0.8, c: 8, f: 0.2 },
+            '木瓜': { cal: 43, p: 0.5, c: 11, f: 0.3 },
+            '芒果': { cal: 60, p: 0.8, c: 15, f: 0.4 },
+            '菠萝': { cal: 50, p: 0.5, c: 13, f: 0.1 },
+            '火龙果': { cal: 51, p: 1.1, c: 12, f: 0.4 },
+            '猕猴桃': { cal: 61, p: 1.1, c: 15, f: 0.5 },
+            '百香果': { cal: 97, p: 2.2, c: 23, f: 0.7 },
+            '榴莲': { cal: 147, p: 1.5, c: 27, f: 5 },
+            '山竹': { cal: 72, p: 0.6, c: 18, f: 0.6 },
+            '荔枝': { cal: 66, p: 0.8, c: 17, f: 0.4 },
+            '龙眼': { cal: 60, p: 1.1, c: 15, f: 0.2 },
+            '杨梅': { cal: 30, p: 0.8, c: 7, f: 0.2 },
+            '枇杷': { cal: 41, p: 0.5, c: 10, f: 0.2 },
+            '牛油果': { cal: 160, p: 2, c: 9, f: 15 },
+            '椰子肉': { cal: 354, p: 3.3, c: 15, f: 33 },
+            '椰青水': { cal: 19, p: 0.7, c: 3.7, f: 0.2 },
 
-        function getTodayKey() {
-            return new Date().toISOString().split('T')[0];
-        }
+            // === 坚果种子 ===
+            '核桃': { cal: 654, p: 15, c: 14, f: 65 },
+            '杏仁': { cal: 579, p: 21, c: 22, f: 50 },
+            '巴旦木': { cal: 575, p: 21, c: 22, f: 49 },
+            '腰果': { cal: 553, p: 18, c: 30, f: 44 },
+            '开心果': { cal: 562, p: 20, c: 28, f: 45 },
+            '夏威夷果': { cal: 718, p: 8, c: 14, f: 76 },
+            '碧根果': { cal: 691, p: 9, c: 14, f: 72 },
+            '松子': { cal: 673, p: 13, c: 13, f: 68 },
+            '榛子': { cal: 628, p: 15, c: 17, f: 61 },
+            '花生': { cal: 567, p: 26, c: 16, f: 50 },
+            '花生米': { cal: 574, p: 24, c: 16, f: 50 },
+            '南瓜子': { cal: 559, p: 30, c: 11, f: 46 },
+            '葵花籽': { cal: 584, p: 21, c: 20, f: 51 },
+            '芝麻': { cal: 573, p: 18, c: 23, f: 50 },
+            '奇亚籽': { cal: 486, p: 17, c: 42, f: 31 },
+            '亚麻籽': { cal: 534, p: 18, c: 29, f: 42 },
+            '坚果(30g)': { cal: 180, p: 6, c: 5, f: 16 },
 
-        // ===== PROFILE =====
-        function showProfile() {
-            document.getElementById('profileModal').classList.remove('hidden');
-            document.getElementById('profileModal').classList.add('flex');
-            if (appData.profile) {
-                document.getElementById('pName').value = appData.profile.name;
-                document.getElementById('pGender').value = appData.profile.gender;
-                document.getElementById('pHeight').value = appData.profile.height;
-                document.getElementById('pWeight').value = appData.profile.weight;
-                document.getElementById('pTarget').value = appData.profile.target;
-                document.getElementById('pAge').value = appData.profile.age;
-            }
-        }
-
-        function closeProfile() {
-            document.getElementById('profileModal').classList.add('hidden');
-            document.getElementById('profileModal').classList.remove('flex');
-        }
-
-        document.getElementById('profileForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            appData.profile = {
-                name: document.getElementById('pName').value,
-                gender: document.getElementById('pGender').value,
-                height: parseFloat(document.getElementById('pHeight').value),
-                weight: parseFloat(document.getElementById('pWeight').value),
-                target: parseFloat(document.getElementById('pTarget').value),
-                age: parseInt(document.getElementById('pAge').value)
-            };
-            saveData();
-            closeProfile();
-            initDashboard();
-            showToast('档案已更新');
-        });
-
-        // ===== DASHBOARD =====
-        function initDashboard() {
-            ensureToday();
-            updateStats();
-            renderLog();
-            updateCharts();
-            updateInsights();
-        }
-
-        function ensureToday() {
-            const key = getTodayKey();
-            if (!appData.history[key]) {
-                appData.history[key] = { foods: [], wods: [], weight: null };
-            }
-            appData.today = appData.history[key];
-        }
-
-        function updateStats() {
-            const p = appData.profile;
-            if (!p) return;
-
-            // BMI
-            const bmi = (p.weight / ((p.height/100) ** 2)).toFixed(1);
-            document.getElementById('dispBMI').textContent = bmi;
-            
-            let bmiTag, bmiColor, bmiPct;
-            if (bmi < 18.5) { bmiTag = '偏瘦'; bmiColor = 'bg-yellow-100 text-yellow-700'; bmiPct = 20; }
-            else if (bmi < 24) { bmiTag = '正常'; bmiColor = 'bg-emerald-100 text-emerald-700'; bmiPct = 50; }
-            else if (bmi < 28) { bmiTag = '偏胖'; bmiColor = 'bg-orange-100 text-orange-700'; bmiPct = 75; }
-            else { bmiTag = '肥胖'; bmiColor = 'bg-red-100 text-red-700'; bmiPct = 90; }
-            
-            const tagEl = document.getElementById('dispBMITag');
-            tagEl.textContent = bmiTag;
-            tagEl.className = `text-xs px-2 py-0.5 rounded-full font-medium ${bmiColor}`;
-            document.getElementById('bmiBar').style.width = bmiPct + '%';
-
-            // Weight
-            const todayWeight = appData.today.weight || p.weight;
-            document.getElementById('dispWeight').textContent = todayWeight.toFixed(1);
-            
-            // Weight change vs yesterday
-            const yesterday = getYesterdayKey();
-            const yestWeight = appData.history[yesterday]?.weight;
-            if (yestWeight && todayWeight) {
-                const diff = (todayWeight - yestWeight).toFixed(1);
-                const sign = diff > 0 ? '+' : '';
-                const color = diff <= 0 ? 'text-emerald-600' : 'text-red-500';
-                document.getElementById('weightChange').innerHTML = `<span class="${color}">${sign}${diff} kg</span>`;
-            } else {
-                document.getElementById('weightChange').textContent = '暂无数据';
-            }
-
-            // Calories
-            const calsIn = appData.today.foods.reduce((s, f) => s + f.calories, 0);
-            const calsOut = appData.today.wods.reduce((s, w) => s + w.calories, 0);
-            document.getElementById('dispCalsIn').textContent = calsIn;
-            document.getElementById('dispCalsOut').textContent = calsOut;
-            document.getElementById('wodCount').textContent = appData.today.wods.length + ' 个 WOD';
-
-            // BMR & Net
-            const bmr = p.gender === 'male' 
-                ? 88.362 + (13.397 * p.weight) + (4.799 * p.height) - (5.677 * p.age)
-                : 447.593 + (9.247 * p.weight) + (3.098 * p.height) - (4.330 * p.age);
-            const tdee = Math.round(bmr * 1.375); // Moderate activity
-            const budget = tdee - 500; // Deficit for weight loss
-            
-            document.getElementById('netBMR').textContent = Math.round(bmr);
-            
-            const net = budget - calsIn + calsOut;
-            const netEl = document.getElementById('netCalories');
-            netEl.textContent = (net > 0 ? '+' : '') + Math.round(net);
-            netEl.className = 'text-3xl font-bold ' + (net >= 0 ? 'text-emerald-400' : 'text-red-400');
-
-            // Progress
-            const totalLost = appData.weightLog.length > 0 
-                ? appData.weightLog[0].weight - todayWeight 
-                : 0;
-            const toLose = p.weight - p.target;
-            const progress = toLose > 0 ? Math.min(100, Math.max(0, (totalLost / toLose) * 100)) : 0;
-            document.getElementById('targetProgress').textContent = progress.toFixed(1) + '%';
-            document.getElementById('netProgressBar').style.width = Math.min(100, (calsIn / budget) * 100) + '%';
-
-            // Bars
-            document.getElementById('calInBar').style.width = Math.min(100, (calsIn / budget) * 100) + '%';
-        }
-
-        // ===== WOD UPLOAD & OCR =====
-        async function handleWODUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const imgData = e.target.result;
-                document.getElementById('wodPlaceholder').classList.add('hidden');
-                document.getElementById('wodPreview').classList.remove('hidden');
-                document.getElementById('wodPreviewImg').src = imgData;
-                document.getElementById('wodScanning').classList.remove('hidden');
-
-                try {
-                    // Use Tesseract.js for OCR
-                    const result = await Tesseract.recognize(imgData, 'eng+chi_sim', {
-                        logger: m => console.log(m)
-                    });
-                    
-                    const text = result.data.text;
-                    document.getElementById('wodScanning').classList.add('hidden');
-                    document.getElementById('ocrResult').classList.remove('hidden');
-                    document.getElementById('ocrText').textContent = text;
-                    
-                    // Estimate calories from OCR text
-                    const cals = estimateWODCalories(text);
-                    document.getElementById('wodCalEstimate').textContent = cals;
-                    
-                    currentWOD = {
-                        text: text,
-                        calories: cals,
-                        image: imgData,
-                        name: 'WOD ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})
-                    };
-                    
-                } catch (err) {
-                    document.getElementById('wodScanning').classList.add('hidden');
-                    showToast('OCR 识别失败，请手动输入', 'error');
-                    console.error(err);
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function estimateWODCalories(text) {
-            const lower = text.toLowerCase();
-            let total = 0;
-            
-            // Check for named WODs
-            for (const [name, cals] of Object.entries(WOD_DB)) {
-                if (lower.includes(name)) {
-                    total += cals;
-                }
-            }
-            
-            // If no named WOD found, estimate based on keywords
-            if (total === 0) {
-                const intensity = 
-                    (lower.match(/squat|deadlift|clean|snatch|thruster/g) || []).length * 15 +
-                    (lower.match(/burpee|pullup|pushup|box jump/g) || []).length * 10 +
-                    (lower.match(/run|row|bike|swim/g) || []).length * 100;
-                total = Math.max(200, intensity);
-            }
-            
-            return Math.round(total);
-        }
-
-        function clearWOD() {
-            currentWOD = null;
-            document.getElementById('ocrResult').classList.add('hidden');
-            document.getElementById('wodPlaceholder').classList.remove('hidden');
-            document.getElementById('wodPreview').classList.add('hidden');
-            document.getElementById('wodInput').value = '';
-        }
-
-        function confirmWOD() {
-            if (!currentWOD) return;
-            appData.today.wods.push({
-                id: Date.now(),
-                name: currentWOD.name,
-                calories: currentWOD.calories,
-                text: currentWOD.text,
-                image: currentWOD.image,
-                time: new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})
-            });
-            saveData();
-            clearWOD();
-            updateStats();
-            renderLog();
-            updateInsights();
-            showToast('WOD 记录已添加');
-        }
-
-        function addManualWOD() {
-            const name = document.getElementById('wodName').value.trim();
-            const cals = parseInt(document.getElementById('wodCals').value);
-            if (!name || !cals) {
-                showToast('请填写训练名称和消耗', 'error');
-                return;
-            }
-            appData.today.wods.push({
-                id: Date.now(),
-                name: name,
-                calories: cals,
-                text: '',
-                image: null,
-                time: new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})
-            });
-            document.getElementById('wodName').value = '';
-            document.getElementById('wodCals').value = '';
-            saveData();
-            updateStats();
-            renderLog();
-            updateInsights();
-            showToast('训练记录已添加');
-        }
-
-        // ===== FOOD ENTRY =====
-        function setMealType(type) {
-            currentMeal = type;
-            document.getElementById('currentMealType').value = type;
-            
-            // Update tabs
-            ['breakfast', 'lunch', 'dinner', 'snack'].forEach(t => {
-                const btn = document.getElementById('btn' + t.charAt(0).toUpperCase() + t.slice(1));
-                if (t === type) {
-                    const colors = {
-                        breakfast: 'bg-amber-100 text-amber-800',
-                        lunch: 'bg-orange-100 text-orange-800',
-                        dinner: 'bg-indigo-100 text-indigo-800',
-                        snack: 'bg-pink-100 text-pink-800'
-                    };
-                    btn.className = `meal-tab px-3 py-1 text-xs font-medium rounded-full transition-all ${colors[t]}`;
-                } else {
-                    btn.className = 'meal-tab px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all';
-                }
-            });
-        }
-
-        function searchFood(query) {
-            const suggestions = document.getElementById('foodSuggestions');
-            if (!query || query.length < 1) {
-                suggestions.classList.add('hidden');
-                return;
-            }
-            
-            const matches = Object.keys(FOOD_DB).filter(f => f.includes(query));
-            if (matches.length === 0) {
-                suggestions.classList.add('hidden');
-                return;
-            }
-            
-            suggestions.innerHTML = matches.map(m => `
-                <div onclick="selectFood('${m}')" class="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 flex justify-between">
-                    <span>${m}</span>
-                    <span class="text-slate-400">${FOOD_DB[m]} kcal</span>
-                </div>
-            `).join('');
-            suggestions.classList.remove('hidden');
-        }
-
-        function selectFood(name) {
-            document.getElementById('foodName').value = name;
-            document.getElementById('foodSuggestions').classList.add('hidden');
-            estimateFoodCal();
-        }
-
-        function estimateFoodCal() {
-            const name = document.getElementById('foodName').value;
-            const amount = parseFloat(document.getElementById('foodAmount').value) || 1;
-            const unit = document.getElementById('foodUnit').value;
-            
-            let baseCal = 0;
-            // Fuzzy match
-            for (const [food, cal] of Object.entries(FOOD_DB)) {
-                if (name.includes(food) || food.includes(name)) {
-                    baseCal = cal;
-                    break;
-                }
-            }
-            
-            let multiplier = 1;
-            if (unit === 'g') multiplier = amount / 100;
-            else if (unit === 'bowl') multiplier = amount;
-            else if (unit === 'piece') multiplier = amount;
-            else multiplier = amount; // serving
-            
-            const total = Math.round(baseCal * multiplier);
-            document.getElementById('foodCalDisplay').textContent = total;
-            return total;
-        }
-
-        function quickFood(name, cals) {
-            document.getElementById('foodName').value = name;
-            document.getElementById('foodAmount').value = 1;
-            document.getElementById('foodUnit').value = 'serving';
-            document.getElementById('foodCalDisplay').textContent = cals;
-        }
-
-        function addFood() {
-            const name = document.getElementById('foodName').value.trim();
-            const cals = parseInt(document.getElementById('foodCalDisplay').textContent) || estimateFoodCal();
-            const amount = document.getElementById('foodAmount').value || 1;
-            const unit = document.getElementById('foodUnit').value;
-            
-            if (!name || cals <= 0) {
-                showToast('请输入有效的食物名称', 'error');
-                return;
-            }
-            
-            appData.today.foods.push({
-                id: Date.now(),
-                name: name,
-                calories: cals,
-                amount: amount,
-                unit: unit,
-                meal: currentMeal,
-                time: new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})
-            });
-            
-            // Clear inputs
-            document.getElementById('foodName').value = '';
-            document.getElementById('foodAmount').value = '1';
-            document.getElementById('foodCalDisplay').textContent = '0';
-            
-            saveData();
-            updateStats();
-            renderLog();
-            updateInsights();
-            showToast(`已添加: ${name}`);
-        }
-
-        // ===== WEIGHT =====
-        function toggleWeightInput() {
-            const panel = document.getElementById('weightInputPanel');
-            panel.classList.toggle('hidden');
-            if (!panel.classList.contains('hidden')) {
-                document.getElementById('weightInput').focus();
-            }
-        }
-
-        function saveWeight() {
-            const w = parseFloat(document.getElementById('weightInput').value);
-            if (!w || w < 30 || w > 200) {
-                showToast('请输入有效的体重', 'error');
-                return;
-            }
-            
-            appData.today.weight = w;
-            appData.profile.weight = w;
-            
-            // Add to weight log
-            const today = getTodayKey();
-            const existingIdx = appData.weightLog.findIndex(x => x.date === today);
-            if (existingIdx >= 0) {
-                appData.weightLog[existingIdx].weight = w;
-            } else {
-                appData.weightLog.push({ date: today, weight: w });
-            }
-            appData.weightLog.sort((a, b) => a.date.localeCompare(b.date));
-            
-            document.getElementById('weightInput').value = '';
-            toggleWeightInput();
-            saveData();
-            updateStats();
-            updateCharts();
-            showToast('体重记录成功');
-        }
-
-        // ===== RENDER LOG =====
-        function renderLog() {
-            const container = document.getElementById('dailyLog');
-            const allItems = [
-                ...appData.today.wods.map(w => ({...w, type: 'wod'})),
-                ...appData.today.foods.map(f => ({...f, type: 'food'}))
-            ].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-            
-            document.getElementById('logCount').textContent = allItems.length + ' 项';
-            
-            if (allItems.length === 0) {
-                container.innerHTML = `
-                    <div class="p-8 text-center text-slate-400">
-                        <i class="fas fa-clipboard-list text-4xl mb-3 opacity-30"></i>
-                        <p class="text-sm">今天还没有记录，开始添加吧！</p>
-                    </div>`;
-                return;
-            }
-            
-            const mealNames = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '加餐', exercise: '运动' };
-            const mealIcons = { breakfast: 'fa-coffee', lunch: 'fa-bowl-rice', dinner: 'fa-utensils', snack: 'fa-cookie', exercise: 'fa-dumbbell' };
-            
-            container.innerHTML = allItems.map(item => {
-                if (item.type === 'wod') {
-                    return `
-                    <div class="p-4 flex items-start space-x-3 food-item-enter group hover:bg-slate-50 transition-colors">
-                        <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-dumbbell text-emerald-600"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between">
-                                <h4 class="font-medium text-slate-900 truncate">${item.name}</h4>
-                                <span class="text-emerald-600 font-bold text-sm">-${item.calories} kcal</span>
-                            </div>
-                            <p class="text-xs text-slate-500 mt-0.5 line-clamp-2">${item.text || '手动记录的训练'}</p>
-                            <div class="flex items-center mt-1 text-xs text-slate-400">
-                                <i class="far fa-clock mr-1"></i>${item.time}
-                            </div>
-                        </div>
-                        <button onclick="removeItem('wod', ${item.id})" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>`;
-                } else {
-                    const badgeClass = `meal-badge-${item.meal}`;
-                    return `
-                    <div class="p-4 flex items-start space-x-3 food-item-enter group hover:bg-slate-50 transition-colors">
-                        <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <i class="fas ${mealIcons[item.meal] || 'fa-utensils'} text-orange-600"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <h4 class="font-medium text-slate-900">${item.name}</h4>
-                                    <span class="text-xs px-2 py-0.5 rounded-full border ${badgeClass}">${mealNames[item.meal]}</span>
-                                </div>
-                                <span class="text-orange-600 font-bold text-sm">+${item.calories} kcal</span>
-                            </div>
-                            <div class="flex items-center mt-1 text-xs text-slate-400">
-                                <span class="mr-3">${item.amount}${item.unit === 'serving' ? '份' : item.unit === 'g' ? '克' : item.unit === 'bowl' ? '碗' : '个'}</span>
-                                <i class="far fa-clock mr-1"></i>${item.time}
-                            </div>
-                        </div>
-                        <button onclick="removeItem('food', ${item.id})" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>`;
-                }
-            }).join('');
-        }
-
-        function removeItem(type, id) {
-            if (type === 'wod') {
-                appData.today.wods = appData.today.wods.filter(w => w.id !== id);
-            } else {
-                appData.today.foods = appData.today.foods.filter(f => f.id !== id);
-            }
-            saveData();
-            updateStats();
-            renderLog();
-            updateInsights();
-        }
-
-        // ===== CHARTS =====
-        let weightChartInstance = null;
-        let macroChartInstance = null;
-
-        function updateCharts() {
-            updateWeightChart();
-            updateMacroChart();
-            updateWeeklyStats();
-        }
-
-        function updateWeightChart() {
-            const range = parseInt(document.getElementById('chartRange').value);
-            const data = appData.weightLog.slice(-range);
-            
-            if (data.length === 0) {
-                // Show empty state
-                return;
-            }
-            
-            const ctx = document.getElementById('weightChart').getContext('2d');
-            
-            if (weightChartInstance) weightChartInstance.destroy();
-            
-            weightChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.map(d => d.date.slice(5)),
-                    datasets: [{
-                        label: '体重 (kg)',
-                        data: data.map(d => d.weight),
-                        borderColor: '#6366f1',
-                        backgroundColor: 'rgba(99, 102, 241, 0.08)',
-                        borderWidth: 2.5,
-                        pointBackgroundColor: '#6366f1',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        fill: true,
-                        tension: 0.4
-                    }, {
-                        label: '目标',
-                        data: data.map(() => appData.profile?.target || 0),
-                        borderColor: '#10b981',
-                        borderWidth: 1.5,
-                        borderDash: [5, 5],
-                        pointRadius: 0,
-                        fill: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            grid: { color: '#f1f5f9' },
-                            ticks: { font: { size: 10 } }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { size: 10 }, maxRotation: 45 }
-                        }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
-                }
-            });
-            
-            // Stats
-            const weights = data.map(d => d.weight);
-            document.getElementById('weightMax').textContent = Math.max(...weights).toFixed(1);
-            document.getElementById('weightMin').textContent = Math.min(...weights).toFixed(1);
-            document.getElementById('weightAvg').textContent = (weights.reduce((a,b) => a+b, 0) / weights.length).toFixed(1);
-        }
-
-        function updateChartRange() {
-            updateWeightChart();
-        }
-
-        function updateMacroChart() {
-            const meals = { breakfast: 0, lunch: 0, dinner: 0, snack: 0 };
-            appData.today.foods.forEach(f => {
-                if (meals[f.meal] !== undefined) meals[f.meal] += f.calories;
-            });
-            
-            const ctx = document.getElementById('macroChart').getContext('2d');
-            if (macroChartInstance) macroChartInstance.destroy();
-            
-            const colors = { breakfast: '#fbbf24', lunch: '#f97316', dinner: '#6366f1', snack: '#ec4899' };
-            const labels = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '加餐' };
-            
-            const hasData = Object.values(meals).some(v => v > 0);
-            if (!hasData) {
-                // Empty donut
-                macroChartInstance = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['暂无数据'],
-                        datasets: [{ data: [1], backgroundColor: ['#f1f5f9'], borderWidth: 0 }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '70%',
-                        plugins: { legend: { display: false } }
-                    }
-                });
-                document.getElementById('macroLegend').innerHTML = '<p class="text-center text-sm text-slate-400">暂无饮食记录</p>';
-                return;
-            }
-            
-            const chartData = Object.entries(meals).filter(([_, v]) => v > 0);
-            macroChartInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: chartData.map(([k, _]) => labels[k]),
-                    datasets: [{
-                        data: chartData.map(([_, v]) => v),
-                        backgroundColor: chartData.map(([k, _]) => colors[k]),
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '70%',
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
-            });
-            
-            document.getElementById('macroLegend').innerHTML = chartData.map(([k, v]) => `
-                <div class="flex items-center justify-between text-sm">
-                    <div class="flex items-center">
-                        <div class="w-3 h-3 rounded-full mr-2" style="background:${colors[k]}"></div>
-                        <span class="text-slate-600">${labels[k]}</span>
-                    </div>
-                    <span class="font-semibold text-slate-900">${v} kcal</span>
-                </div>
-            `).join('');
-        }
-
-        function updateWeeklyStats() {
-            // Get last 7 days
-            const days = [];
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                days.push(d.toISOString().split('T')[0]);
-            }
-            
-            let wodDays = 0, dietDays = 0;
-            let weekStartWeight = null, weekEndWeight = null;
-            
-            days.forEach((day, idx) => {
-                const h = appData.history[day];
-                if (h) {
-                    if (h.wods.length > 0) wodDays++;
-                    const cals = h.foods.reduce((s, f) => s + f.calories, 0);
-                    if (cals > 0 && cals < 2500) dietDays++; // Rough check
-                    if (h.weight) {
-                        if (weekStartWeight === null) weekStartWeight = h.weight;
-                        weekEndWeight = h.weight;
-                    }
-                }
-            });
-            
-            document.getElementById('weekWODs').textContent = wodDays + '/7';
-            document.getElementById('weekDiet').textContent = dietDays + '/7';
-            
-            if (weekStartWeight && weekEndWeight) {
-                const diff = (weekEndWeight - weekStartWeight).toFixed(1);
-                const sign = diff > 0 ? '+' : '';
-                document.getElementById('weekWeightChange').textContent = sign + diff + ' kg';
-            } else {
-                document.getElementById('weekWeightChange').textContent = '--';
-            }
-        }
-
-        // ===== AI INSIGHTS =====
-        function updateInsights() {
-            if (!appData.profile) return;
-            
-            const calsIn = appData.today.foods.reduce((s, f) => s + f.calories, 0);
-            const calsOut = appData.today.wods.reduce((s, w) => s + w.calories, 0);
-            const wodCount = appData.today.wods.length;
-            
-            const insights = [];
-            
-            // WOD insight
-            if (wodCount === 0) {
-                insights.push('<p>🏃 <strong>今天还没有训练记录</strong>。建议安排 20-30 分钟的力量或有氧训练，帮助提高代谢。</p>');
-            } else {
-                insights.push(`<p>🔥 <strong>今天已完成 ${wodCount} 个训练</strong>，消耗约 ${calsOut} kcal。${calsOut > 400 ? '训练强度不错！' : '可以适当增加训练强度。'}</p>`);
-            }
-            
-            // Diet insight
-            if (calsIn === 0) {
-                insights.push('<p>🍽️ <strong>还没有饮食记录</strong>。记得记录每一餐，这样才能准确掌握热量摄入。</p>');
-            } else if (calsIn < 1200) {
-                insights.push('<p>⚠️ <strong>摄入偏低</strong>。当前记录 ' + calsIn + ' kcal，可能低于基础代谢需求，长期过低会影响代谢。</p>');
-            } else if (calsIn > 2500) {
-                insights.push('<p>⚠️ <strong>摄入偏高</strong>。建议晚餐选择低热量高蛋白食物，并增加今日运动量。</p>');
-            } else {
-                insights.push('<p>✅ <strong>热量摄入合理</strong>。继续保持均衡饮食，注意蛋白质摄入。</p>');
-            }
-            
-            // Weight trend
-            const recent = appData.weightLog.slice(-7);
-            if (recent.length >= 3) {
-                const trend = recent[recent.length-1].weight - recent[0].weight;
-                if (trend < -0.5) {
-                    insights.push('<p>📉 <strong>体重呈下降趋势</strong>，近7天减少 ' + Math.abs(trend).toFixed(1) + ' kg，节奏健康。</p>');
-                } else if (trend > 0.5) {
-                    insights.push('<p>📈 <strong>体重略有上升</strong>，建议检查饮食记录是否完整，或增加训练频率。</p>');
-                } else {
-                    insights.push('<p>📊 <strong>体重保持稳定</strong>。平台期可以尝试调整训练模式或饮食结构。</p>');
-                }
-            }
-            
-            document.getElementById('aiInsights').innerHTML = insights.join('');
-        }
-
-        // ===== UTILS =====
-        function getYesterdayKey() {
-            const d = new Date();
-            d.setDate(d.getDate() - 1);
-            return d.toISOString().split('T')[0];
-        }
-
-        function saveData() {
-            localStorage.setItem('fitTrackAgent_v2', JSON.stringify(appData));
-        }
-
-        function loadData() {
-            const saved = localStorage.getItem('fitTrackAgent_v2');
-            if (saved) {
-                appData = JSON.parse(saved);
-            }
-        }
-
-        function exportData() {
-            const dataStr = JSON.stringify(appData, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `fittrack_backup_${getTodayKey()}.json`;
-            a.click();
-            showToast('数据已导出');
-        }
-
-        function showToast(msg, type = 'success') {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toastIcon');
-            const text = document.getElementById('toastMsg');
-            
-            text.textContent = msg;
-            icon.className = type === 'error' ? 'fas fa-exclamation-circle text-red-400' : 'fas fa-check-circle text-emerald-400';
-            
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
-        }
-
-        // Close suggestions on click outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('#foodSearch') && !e.target.closest('#foodSuggestions')) {
-                document.getElementById('foodSuggestions').classList.add('hidden');
-            }
-        });
-    </script>
-</body>
-</html>
+            // === 零食饮料 ===
+            '黑咖啡': { cal: 2, p: 0.1, c: 0, f: 0 },
+            '拿铁': { cal: 120, p: 6, c: 10, f: 6 },
+            '卡布奇诺': { cal: 100, p: 5, c: 8, f: 5 },
+            '美式咖啡': { cal: 5, p: 0.3, c: 1, f: 0 },
+            '摩卡': { cal: 200, p: 6, c: 25, f: 8 },
+            '焦糖玛奇朵': { cal: 240, p: 6, c: 30, f: 9 },
+            '奶茶': { cal: 300, p: 2, c: 45, f: 12 },
+            '珍珠奶茶': { cal: 350, p: 2, c: 55, f: 12 },
+            '抹茶拿铁': { cal: 180, p: 5, c: 25, f: 6 },
+            '可乐(330ml)': { cal: 140, p: 0, c: 35, f: 0 },
+            '无糖可乐': { cal: 1, p: 0, c: 0, f: 0 },
+            '雪碧': { cal: 140, p: 0, c: 35, f: 0 },
+            '芬达': { cal: 130, p: 0, c: 32, f: 0 },
+            '橙汁': { cal: 110, p: 1.7, c: 26, f: 0.5 },
+            '苹果汁': { cal: 110, p: 0.3, c: 28, f: 0.2 },
+            '葡萄汁': { cal: 140, p: 0.5, c: 34, f: 0.2 },
+            '椰汁': { cal: 50, p: 0.5, c: 10, f: 1 },
+            '酸梅汤': { cal: 80, p: 0.5, c: 20, f: 0 },
+            '绿豆汤': { cal: 120, p: 4, c: 25, f: 0.5 },
+            '红豆汤': { cal: 150, p: 5, c: 30, f: 1 },
+            '银耳汤': { cal: 80, p: 1, c: 18, f: 0.5 },
+            '啤酒(500ml)': { cal: 150, p: 1, c: 12, f: 0 },
+            '红酒
